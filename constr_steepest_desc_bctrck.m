@@ -1,14 +1,15 @@
 function [xk,fk,gradf_norm, k, xseq,btseq,deltaxk_norm]=constr_steepest_desc_bctrck...
-    (x0,f,gradf,kmax,tolgrad,c1,rho,btmax,gamma, tolx,pi_X)
-
+    (x0,f,kmax,tolgrad,c1,rho,btmax,gamma, tolx,pi_X)
+    
+    geth=@(xhat,k) norm(xhat)*10^k;
     xk=x0;
-    k=0;
     xseq=zeros(size(x0));
     xseq(:,1)=x0;
     reached=0;
     btseq=zeros(kmax);
     for k=1:kmax
         xkm1=xk;
+        gradf=-findiff_grad(f,xk,geth(,'fw');
         alphak=1;
         count=0;
         p=-gradf(xk);
@@ -40,4 +41,8 @@ end
 
 function value=armijo(xk,c1,ak,f,gradf)
     value=f(xk)+c1*ak*norm(gradf(xk));
+end
+
+function h=geth(xhat,k)
+    h=norm(xhat)*10^k;
 end
