@@ -1,6 +1,6 @@
 function [xk, fk, gradfk_norm, deltaxk_norm, k, xseq, btseq] = ...
     constr_steepest_desc_bcktrck(x0, f, gradf, ...
-    kmax, tolgrad, c1, rho, btmax, gamma, tolx,findiff_enable)
+    kmax, tolgrad, c1, rho, btmax, gamma, tolx,k_findiff,findiff_enable)
 %{
 =================================================================
 input:
@@ -42,11 +42,13 @@ deltaxk_norm = tolx + 1;
 farmijo = @(fk, alpha, gradfk, pk) fk + c1 * alpha * gradfk' * pk;
 
 while k < kmax && gradfk_norm >= tolgrad && deltaxk_norm >= tolx
+    
     if findiff_enable
-        pk=-findiff_grad(f,xk,geth(xk,k),'fw');
+        pk=-findiff_grad(f,xk,geth(xk,k_findiff),'fw');
     else
         pk = -gradf(xk);
     end
+    
     xbark = xk + gamma * pk;
     xhatk = box_projection(xbark);    
     
