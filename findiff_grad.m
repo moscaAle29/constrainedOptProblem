@@ -1,14 +1,27 @@
-function [gradf]=findiff_grad(f,x,h,type)
-dim=length(x);
-base=eye(dim);
-gradf=zeros(dim,1);
+function [gradfx] = findiff_grad(f, x, h, type)
+
+gradfx = zeros(size(x));
+
 switch type
     case 'fw'
-        for i=1:dim
-            gradf(i)=(f(x+h*base(:,i))-f(x))/h;
+        for i=1:length(x)
+            xh = x;
+            xh(i) = xh(i) + h;
+            gradfx(i) = (f(xh) - f(x))/ h;
+        end
+    case 'c'
+        for i=1:length(x)
+            xh_plus = x;
+            xh_minus = x;
+            xh_plus(i) = xh_plus(i) + h;
+            xh_minus(i) = xh_minus(i) - h;
+            gradfx(i) = (f(xh_plus) - f(xh_minus))/(2 * h);
         end
     otherwise
         for i=1:length(x)
-            gradf(i)=(f(x+h*base(:,i))-f(x-h*base(:,i)))/(2*h);
+            xh = x;
+            xh(i) = xh(i) + h;
+            gradfx(i) = (f(xh) - f(x))/h;
         end
+end
 end
