@@ -2,12 +2,14 @@ function [gradfx] = findiff_grad(f, x, h, type)
 
 gradfx = zeros(size(x));
 
+fx = f(x);
+
 switch type
     case 'fw'
         for i=1:length(x)
             xh = x;
             xh(i) = xh(i) + h;
-            gradfx(i) = (f(xh) - f(x))/ h;
+            gradfx(i) = (f(xh) - fx)/ h;
         end
     case 'c'
         for i=1:length(x)
@@ -21,7 +23,7 @@ switch type
         for i=1:length(x)
             xh = x;
             xh(i) = xh(i) + h;
-            gradfx(i) = (f(xh) - f(x))/h;
+            gradfx(i) = (f(xh) - fx)/h;
         end
 end
 end
