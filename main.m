@@ -10,22 +10,27 @@
 clear all
 close all
 %define the variables for the problem
-d=3;
+d=5;
 n=10^d;
-x0=ones(n,1);
-alpha0=0.2;
+x0=100*ones(n,1);
+alpha0=1;
 kmax=1000;
-tolgrad=10^-12;
+tolgrad=10^-(8-d);
 c1=10^-4;
 rho=0.8;
 btmax=50;
 gamma=0.1;
-tolx=10^-12;
+tolx=10^-(8-d);
 
 %start by defining the feasible set
 X1=zeros(n,2);
 X2=zeros(n,2);
 X3=zeros(n,2);
+
+% define a function handle for the function
+f=@(x) sum((1:length(x))'.*(x.^2));
+%define a funcion handle for the gradient of the function
+gradf=@(x) 2*(1:length(x))'.*x ;
 
 %define the first feasible set
 for i=1:n
@@ -57,7 +62,7 @@ end
 %solve the unconstrained problem with exact gradient 
 tic
 [xk,fk,gradf_norm, k, xseq,btseq]=...
-    steepest_desc_bcktrck(x0,@f, @gradf, alpha0, kmax,...
+    steepest_desc_bcktrck(x0,f, gradf, alpha0, kmax,...
     tolgrad, c1, rho, btmax,false,0,'fw');
 unconstrained_time_e=toc*ones(6,1);
 unconstrained_error_e=norm(xk)*ones(6,1);
@@ -70,7 +75,7 @@ i=1;
 for findiff_k=2:2:12
     tic;
     [xk, fk, grad_norm, k, xseq,btseq]=...
-        steepest_desc_bcktrck(x0,@f,@gradf,alpha0 ,kmax, tolgrad,...
+        steepest_desc_bcktrck(x0,f,gradf,alpha0 ,kmax, tolgrad,...
         c1, rho, btmax,true,findiff_k,'fw'); %#ok<*ASGLU> 
     unconstrained_time_findiff_fw(i)=toc;
     unconstrained_error_findiff_fw(i)=norm(xk);
@@ -84,7 +89,7 @@ i=1;
 for findiff_k=2:2:12
     tic;
     [xk,fk,gradf_norm, k, xseq,btseq]=...
-        steepest_desc_bcktrck(x0,@f,@gradf,alpha0 ,kmax, tolgrad,...
+        steepest_desc_bcktrck(x0,f,gradf,alpha0 ,kmax, tolgrad,...
         c1, rho, btmax,true,findiff_k,'c');
     unconstrained_time_findiff_cd(i)=toc;
     unconstrained_error_findiff_cd(i)=norm(xk);
@@ -98,26 +103,26 @@ plot(x,unconstrained_time_e,x,unconstrained_time_findiff_fw,x,unconstrained_time
 title('time used to solve unconstrained problem')
 xlabel("value of k")
 ylabel("seconds")
-legend({'exact gradient time','forward finite differences time','centered finite differences time'},'location','southoutside')
+legend({'exact gradient time','forward finite differences time','centered finite differences time'},'location','southeast')
 %plot the error
 figure(2)
 plot(x,unconstrained_error_e,x,unconstrained_error_findiff_fw,x,unconstrained_error_findiff_cd)
 title('norm of the error in unconstrained problem')
 xlabel("value of k")
-ylabel("value of f")
-legend({'exact gradient error','forward finite differences gradient error','centered finite differences gradient error'},'location','southoutside')
+ylabel("error")
+legend({'exact gradient error','forward finite differences gradient error','centered finite differences gradient error'},'location','southeast')
 
-feasible_set=X1;
+%set the feasible set
+feasible_set=X2;
+Pi_X = @(x) box_projection(x, X3);
 %solve the constrained problem with exact gradient 
 tic
 [xk,fk,gradf_norm,deltaxk_norm, k, xseq,btseq]=...
-    constr_steepest_desc_bcktrck(x0,@f, @gradf, kmax,...
-    tolgrad, c1, rho, btmax, gamma, tolx,false,0,'fw',feasible_set);
+    constr_steepest_desc_bcktrck(x0,f, gradf, kmax,...
+    tolgrad, c1, rho, btmax, gamma, tolx, feasible_set, ...
+    false, 0,'fw');
 constrained_time_e=toc*ones(6,1);
-constrained_error_e=norm(xk)*ones(6,1);
-
-%set the feasible set
-
+constrained_error_e=norm(xk-box_projection(zeros(n,1),feasible_set))*ones(6,1);
 
 %solve the constrained problem with finite differences of the gradient
 %using forward method
@@ -127,10 +132,11 @@ i=1;
 for findiff_k=2:2:12
     tic;
     [xk,fk,gradf_norm,deltaxk_norm, k, xseq,btseq]=...
-    constr_steepest_desc_bcktrck(x0,@f, @gradf, kmax,...
-    tolgrad, c1, rho, btmax, gamma, tolx,false,0,'fw',feasible_set);
+    constr_steepest_desc_bcktrck(x0,f, gradf, kmax,...
+    tolgrad, c1, rho, btmax, gamma, tolx, feasible_set,...
+    true, findiff_k,'fw');
     constrained_time_findiff_fw(i)=toc;
-    constrained_error_findiff_fw(i)=norm(xk);
+    constrained_error_findiff_fw(i)=norm(xk-box_projection(zeros(n,1),feasible_set));
     i=i+1;
 end
 %solve the unconstrained problem with finite differences of the gradient
@@ -141,10 +147,11 @@ i=1;
 for findiff_k=2:2:12
     tic;
     [xk,fk,gradf_norm,deltaxk_norm, k, xseq,btseq]=...
-    constr_steepest_desc_bcktrck(x0,@f, @gradf, kmax,...
-    tolgrad, c1, rho, btmax, gamma, tolx,false,0,'c',X1);
+    constr_steepest_desc_bcktrck(x0,f, gradf, kmax,...
+    tolgrad, c1, rho, btmax, gamma, tolx, feasible_set,...
+    true, findiff_k,'fw');
     constrained_time_findiff_cd(i)=toc;
-    constrained_error_findiff_cd(i)=norm(xk);
+    constrained_error_findiff_cd(i)=norm(xk-box_projection(zeros(n,1),feasible_set));
     i=i+1;
 end
 %plot the time it takes us to execute the function
@@ -155,33 +162,11 @@ plot(x,constrained_time_e,x,constrained_time_findiff_fw,x,constrained_time_findi
 title('time used to solve constrained problem')
 xlabel("value of k")
 ylabel("seconds")
-legend({'exact gradient time','forward finite differences time','centered finite differences time'},'location','southoutside')
+legend({'exact gradient time','forward finite differences time','centered finite differences time'},'location','southeast')
 %plot the error
 figure(4)
 plot(x,constrained_error_e,x,constrained_error_findiff_fw,x,constrained_time_findiff_cd)
 title('norm of the error in constrained problem')
 xlabel("value of k")
-ylabel("value of f")
-legend({'exact gradient error','forward finite differences gradient error','centered finite differences gradient error'},'location','southoutside')
-
-
-% define a function handle for the function
-function y = f(x)
-    sum=0;
-    len=length(x);
-    for i= 1:len
-        sum=sum+i*x(i)^2;
-    end
-    y=sum;
-end
-
-%define a function handle fot the exact gradient
-%note for Triet and Giacomo am i dumb for the computation of the gradient?
-function gradf_value= gradf(x)
-    len_x=length(x);
-    gradf_value=zeros(len_x,1);
-    for i=1:len_x
-        gradf_value(i)=2*i*x(i);
-
-    end
-end
+ylabel("error")
+legend({'exact gradient error','forward finite differences gradient error','centered finite differences gradient error'},'location','southeast')

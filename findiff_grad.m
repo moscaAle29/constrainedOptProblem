@@ -1,27 +1,12 @@
-function [gradfx] = findiff_grad(f, x, h, type)
-
-gradfx = zeros(size(x));
-
-switch type
-    case 'fw'
-        for i=1:length(x)
-            xh = x;
-            xh(i) = xh(i) + h;
-            gradfx(i) = (f(xh) - f(x))/ h;
-        end
-    case 'c'
-        for i=1:length(x)
-            xh_plus = x;
-            xh_minus = x;
-            xh_plus(i) = xh_plus(i) + h;
-            xh_minus(i) = xh_minus(i) - h;
-            gradfx(i) = (f(xh_plus) - f(xh_minus))/(2 * h);
-        end
-    otherwise
-        for i=1:length(x)
-            xh = x;
-            xh(i) = xh(i) + h;
-            gradfx(i) = (f(xh) - f(x))/h;
-        end
-end
+function [gradfx] = findiff_grad(x, h, type)
+    len=length(x);
+    F=@(x) (1:len)'.*(x.^2);
+    switch type
+        case 'fw'
+            gradfx = (F(x+h*ones(len,1)) - F(x))/ h;
+        case 'c'
+            gradfx = (F(x+h*ones(len,1)) - F(x-h*ones(len,1)))/(2 * h);
+        otherwise
+            gradfx = (F(x+h*ones(len,1)) - F(x))/ h;
+    end
 end

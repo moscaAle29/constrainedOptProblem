@@ -1,3 +1,5 @@
 function xhat=box_projection(x,feasible_set)
-    xhat=max(min(x,feasible_set(2)),feasible_set(1));
+    mins = feasible_set(:,1);
+    maxs = feasible_set(:,2);
+    xhat = max(min(x, maxs), mins);
 end

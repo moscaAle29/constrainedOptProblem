@@ -36,13 +36,13 @@ farmijo = @(fk, alpha, gradfk, pk) ...
 get_h= @(xhat,k) norm(xhat)*10^-k;
 
 % Initializations
-xseq = zeros(length(x0), kmax);
+xseq = zeros(length(x0),kmax);
 btseq = zeros(1, kmax);
 
 xk = x0;
 fk = f(xk);
 if findiff_enable
-    gradfk = findiff_grad(f,xk,get_h(xk,k_findiff),method);
+    gradfk = findiff_grad(xk,get_h(xk,k_findiff),method);
 else
     gradfk = gradf(xk);
 end
@@ -51,12 +51,10 @@ gradfk_norm = norm(gradfk);
 
 while k < kmax && gradfk_norm >= tolgrad
     % Compute the descent direction
-    if findiff_enable
-        pk = -findiff_grad(f,xk,get_h(xk,k_findiff),method);
-    else
-        pk = -gradf(xk);
-    end
+    pk= -gradfk;
     
+    pk=pk./(1:length(xk))';
+
     % Reset the value of alpha
     alpha = alpha0;
     
@@ -68,7 +66,7 @@ while k < kmax && gradfk_norm >= tolgrad
     bt = 0;
     % Backtracking strategy: 
     % 2nd condition is the Armijo condition not satisfied
-    while bt < btmax & fnew > farmijo(fk, alpha, gradfk, pk)
+    while bt < btmax && fnew > farmijo(fk, alpha, gradfk, pk)
         % Reduce the value of alpha
         alpha = rho * alpha;
         % Update xnew and fnew w.r.t. the reduced alpha
@@ -84,9 +82,9 @@ while k < kmax && gradfk_norm >= tolgrad
     xk = xnew;
     fk = fnew;
     if findiff_enable
-        gradfk = -findiff_grad(f,xk,get_h(xk,k_findiff),method);
+        gradfk = findiff_grad(xk,get_h(xk,k_findiff),method);
     else
-        gradfk = -gradf(xk);
+        gradfk = gradf(xk);
     end
     gradfk_norm = norm(gradfk);
     
