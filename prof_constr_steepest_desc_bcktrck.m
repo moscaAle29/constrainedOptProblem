@@ -1,4 +1,4 @@
-function [xk, fk, gradfk_norm, deltaxk_norm, k, xseq, btseq] = ...
+function [xk, fk, gradfk_norm, deltaxk_norm, k, xseq, btseq, piseq] = ...
     prof_constr_steepest_desc_bcktrck(x0, f, gradf, ...
     kmax, tolgrad, c1, rho, btmax, gamma, tolx, Pi_X)
 %
@@ -43,6 +43,7 @@ farmijo = @(fk, alpha, gradfk, pk) ...
 
 % Initializations
 xseq = zeros(length(x0), kmax);
+piseq = zeros(length(x0),kmax);
 btseq = zeros(1, kmax);
 
 xk = Pi_X(x0); % Project the starting point if outside the constraints
@@ -50,13 +51,17 @@ fk = f(xk);
 gradfk = gradf(xk);
 
 k = 0;
-gradfk_norm = norm(xk);
+gradfk_norm = norm(gradfk);
 deltaxk_norm = tolx + 1;
 
 while k < kmax && gradfk_norm >= tolgrad && deltaxk_norm >= tolx
     disp(k)
+    disp(deltaxk_norm)
     % Compute the descent direction
     pk = -gradfk;
+    for i = 1:length(pk)
+        pk(i) = pk(i) / i;
+    end
     
     xbark = xk + gamma * pk;
     xhatk = Pi_X(xbark);    
@@ -66,6 +71,9 @@ while k < kmax && gradfk_norm >= tolgrad && deltaxk_norm >= tolx
     
     % Compute the candidate new xk
     pik = xhatk - xk;
+    %for i = 1: 100
+    %    pik(i) = pik(i) * 10;
+    %end
     xnew = xk + alpha * pik;
     
     % Compute the value of f in the candidate new xk
@@ -93,13 +101,14 @@ while k < kmax && gradfk_norm >= tolgrad && deltaxk_norm >= tolx
     xk = xnew;
     fk = fnew;
     gradfk = gradf(xk);
-    gradfk_norm = norm(xk);
+    gradfk_norm = norm(gradfk);
     
     % Increase the step by one
     k = k + 1;
     
     % Store current xk in xseq
     xseq(:, k) = xk;
+    piseq(:,k) = pik;
     % Store bt iterations in btseq
     btseq(k) = bt;
 end

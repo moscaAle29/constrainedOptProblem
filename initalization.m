@@ -5,10 +5,10 @@ clc
 %define the variables for the problem
 d=5;
 n=10^d;
-x0=ones(n,1);
+x0=100*ones(n,1);
 alpha0=1;
 kmax=1000;
-tolgrad=0.1;
+tolgrad=10^-3;
 c1=10^-4;
 rho=0.8;
 btmax=50;
